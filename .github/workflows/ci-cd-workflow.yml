@@ -34,7 +34,9 @@ jobs:
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: |
+        chmod +x ./gradlew  # gradlew에 실행 권한 부여
+        ./gradlew build
 
     - name: Upload JAR file  # JAR 파일을 업로드
       uses: actions/upload-artifact@v4
