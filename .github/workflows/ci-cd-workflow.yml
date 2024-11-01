@@ -39,7 +39,7 @@ jobs:
         ./gradlew build
 
     - name: Upload JAR file  # JAR 파일을 업로드
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: app
         path: salon-reservation/build/libs/salon-reservation-0.0.1-SNAPSHOT.jar
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Download JAR file
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: app
 
