@@ -19,6 +19,7 @@ public class Member extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "member_id")
 	private Long id;
+	private Long kakaoMemberId;  //카카오 서버에서의 회원번호
 
 	private String name;
 	private String email;
