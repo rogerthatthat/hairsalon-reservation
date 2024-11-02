@@ -44,32 +44,42 @@ jobs:
         name: salon
         path: build/libs/salon-reservation-0.0.1-SNAPSHOT.jar
 
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Download JAR file
-        uses: actions/download-artifact@v3
-        with:
-          name: salon
+    - name: Download JAR file
+      uses: actions/download-artifact@v3
+      with:
+        name: salon
 
-      - name: Deploy to EC2
-        env:
-          EC2_USER: ${{ secrets.EC2_USER }}  # EC2 사용자
-          EC2_HOST: ${{ secrets.EC2_HOST }}  # EC2 호스트
-          RDS_HOST: ${{ secrets.RDS_HOST }}  # RDS 호스트
-          RDS_PORT: ${{ secrets.RDS_PORT }}  # RDS 포트
-          RDS_USER: ${{ secrets.RDS_USER }}  # RDS 사용자
-          RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}  # RDS 비밀번호
-          EC2_KEY: ${{ secrets.EC2_KEY }}  # EC2 키 파일 경로
-        run: |
-          echo "$EC2_KEY" > ec2_key.pem
-          chmod 600 ec2_key.pem
-          scp -o StrictHostKeyChecking=no -i ec2_key.pem /home/ubuntu/salon-reservation/build/libs/salon-reservation-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/salon-reservation-0.0.1-SNAPSHOT.jar
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-            nohup java -jar /home/ubuntu/salon-reservation-0.0.1-SNAPSHOT.jar --spring.datasource.url=jdbc:mysql://${RDS_HOST}:${RDS_PORT}/salon --spring.datasource.username=${RDS_USER} --spring.datasource.password=${RDS_PASSWORD} > /home/ubuntu/nohup.out 2>&1 &
-          EOF
+    - name: Deploy to EC2
+      env:
+        EC2_USER: ${{ secrets.EC2_USER }}
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        RDS_HOST: ${{ secrets.RDS_HOST }}
+        RDS_PORT: ${{ secrets.RDS_PORT }}
+        RDS_USER: ${{ secrets.RDS_USER }}
+        RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+        EC2_KEY: ${{ secrets.EC2_KEY }}
+      run: |
+        echo "Starting deployment..."
+        echo "$EC2_KEY" > ec2_key.pem
+        chmod 600 ec2_key.pem
+
+        echo "Transferring JAR file to EC2..."
+        scp -o StrictHostKeyChecking=no -i ec2_key.pem salon-reservation-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/salon-reservation/salon-reservation-0.0.1-SNAPSHOT.jar
+        echo "File transfer complete."
+
+        echo "Connecting to EC2 and starting application..."
+        ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+          mkdir -p /home/ubuntu/salon-reservation
+          nohup java -jar /home/ubuntu/salon-reservation/salon-reservation-0.0.1-SNAPSHOT.jar --spring.datasource.url=jdbc:mysql://${RDS_HOST}:${RDS_PORT}/salon --spring.datasource.username=${RDS_USER} --spring.datasource.password=${RDS_PASSWORD} > /home/ubuntu/salon-reservation/nohup.out 2>&1 &
+          echo "Application started."
+        EOF
+        echo "Deployment complete."
           
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
