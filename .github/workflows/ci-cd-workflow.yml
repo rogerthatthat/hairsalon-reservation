@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+      KAKAO_LOGIN_REDIRECT_URI: ${{ secrets.KAKAO_LOGIN_REDIRECT_URI }}
+      KAKAO_LOGIN_NONCE: ${{ secrets.KAKAO_LOGIN_NONCE }}
 
     steps:
     - uses: actions/checkout@v4
