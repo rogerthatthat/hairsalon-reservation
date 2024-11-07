@@ -32,10 +32,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Set application secrets
+    - name: Set environment variables for configuration files
       run: |
-        echo "${{ secrets.APPLICATION_YML }}" > ./src/main/resources/application.yml
-        echo "${{ secrets.APPLICATION_SECRET_YML }}" > ./src/main/resources/application-secret.yml
+        echo "APPLICATION_YML=$(cat /path/to/application.yml)" >> $GITHUB_ENV
+        echo "APPLICATION_SECRET_YML=$(cat /path/to/application-secret.yml)" >> $GITHUB_ENV
+
+    - name: Run application
+      run: |
+        echo $APPLICATION_YML > ./src/main/resources/application.yml
+        echo $APPLICATION_SECRET_YML > ./src/main/resources/application-secret.yml
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
