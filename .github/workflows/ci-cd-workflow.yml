@@ -68,6 +68,8 @@ jobs:
         RDS_USER: ${{ secrets.RDS_USER }}
         RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
         EC2_KEY: ${{ secrets.EC2_KEY }}
+        REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        REDIS_PORT: ${{ secrets.REDIS_PORT }}
       run: |
         echo "Starting deployment..."
         echo "$EC2_KEY" > ec2_key.pem
