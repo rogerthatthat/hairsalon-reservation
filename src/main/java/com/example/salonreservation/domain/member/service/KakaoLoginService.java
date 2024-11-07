@@ -1,6 +1,5 @@
 package com.example.salonreservation.domain.member.service;
 
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,9 +10,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -38,11 +37,10 @@ public class KakaoLoginService {
     @Value("${kakao.login.user-info-uri}")
     private String userInfoUri;
 
-    @Value("${kakao.login.oidc.public-jwks-uri}")
-    private String publicJwksUri;
-
     private final RestTemplate restTemplate;
-    private final IdTokenValidator idTokenValidator;
+    private final TokenHelper tokenHelper;
+    private final IdTokenPayloadValidator idTokenPayloadValidator;
+    private final IdTokenSignValidator idTokenSignValidator;
 
     /**
      * 카카오 로그인 페이지 주소 생성
@@ -67,7 +65,7 @@ public class KakaoLoginService {
 
 
     /**
-     * 인가 코드를 통해 카카오 인증 서버에서 토큰 받기
+     * 인가 코드를 통해 카카오 인증 서버에서 토큰 받기 요청
      * @param code
      * @return 액세스 토큰, 리프레시 토큰, OIDC ID 토큰
      *          {
@@ -80,7 +78,7 @@ public class KakaoLoginService {
      * }
      */
     public Map getTokenFromKakao(String code) {
-        HttpEntity request = makeGetTokenRequest(code);
+        HttpEntity request = generateGetTokenRequest(code);
         ResponseEntity<Map> response = restTemplate.postForEntity(tokenUri, request, Map.class);
 
         return response.getBody();
@@ -92,7 +90,7 @@ public class KakaoLoginService {
      * @param code
      * @return 토큰 받기 POST 요청을 위한 Request
      */
-    private HttpEntity makeGetTokenRequest(String code) {
+    private HttpEntity generateGetTokenRequest(String code) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", restApiKey);
@@ -112,31 +110,13 @@ public class KakaoLoginService {
      * @return
      */
     public String verifyIdToken(Map body) {
-        DecodedJWT idToken = idTokenValidator.getDecodedIdTokenFromBody(body);  //body로부터 OIDC ID 토큰 추출 후 Base64 디코딩 처리
+        DecodedJWT idToken = tokenHelper.getDecodedIdTokenFromBody(body);  //body로부터 OIDC ID 토큰 추출 후 Base64 디코딩 처리
+        idTokenPayloadValidator.verifyIdTokenPayload(idToken);  //OIDC ID 토큰의 페이로드 유효성 검증
 
-        idTokenValidator.verifyIdTokenPayload(idToken);  //OIDC ID 토큰의 페이로드 유효성 검증
+        String kid = tokenHelper.getKidFromIdToken(idToken);  //OIDC ID 토큰의 kid값 추출
+        idTokenSignValidator.verifyIdTokenSign(idToken, kid);  //OIDC ID 토큰의 서명 유효성 검증
 
-        Claim kidFromIdToken = idTokenValidator.getKidFromIdToken(idToken);  //OIDC ID 토큰의 kid값 추출
-        Map valuesForPublicKey = getPublicKey(kidFromIdToken);  //공개키 목록에서 OIDC ID 토큰의 kid에 해당하는 공개키 값들 추출
-
-        idTokenValidator.verifyIdTokenSign(valuesForPublicKey);  //OIDC ID 토큰의 서명 유효성 검증
-
-        return idTokenValidator.getAccessTokenFromBody(body);
-    }
-
-
-    private Map getPublicKey(Claim kid) {
-        ResponseEntity<Object> response = restTemplate.getForEntity(publicJwksUri, Object.class);
-        response.getBody();
-
-        //공개 키 캐싱
-
-        //응답의 공개키 목록을 뒤져서 ID 토큰의 kid에 해당하는 values(modules, exponent로 구성) 추출
-        Map<String, String> valuesForPublicKey = new HashMap<>();
-        valuesForPublicKey.put("modules", "");
-        valuesForPublicKey.put("exponent", "");
-
-        return valuesForPublicKey;
+        return tokenHelper.getAccessTokenFromBody(body);
     }
 
 
@@ -151,10 +131,8 @@ public class KakaoLoginService {
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         ResponseEntity<Map> response = restTemplate.exchange(userInfoUri, HttpMethod.GET, request, Map.class);
-        Long kakaoMemberId = (Long) response.getBody().get("sub");
 
-        return kakaoMemberId;
+        return tokenHelper.getKakaoMemberIdFromResponse(response);
     }
-
 
 }
