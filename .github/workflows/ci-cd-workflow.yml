@@ -34,11 +34,11 @@ jobs:
 
     - name: make application yml  # application.yml 생성
       run: |
-        cd ./src/main/resources
+        cd ./src/main
         touch ./application.yml
-        echo "${{ secrets.APPLICATION_YML }}" > ./application.yml
+        echo "${{ secrets.APPLICATION_YML }}" > ./resources/application.yml
         touch ./application-secret.yml
-        echo "${{ secrets.APPLICATION_SECRET_YML }}" > ./application-secret.yml
+        echo "${{ secrets.APPLICATION_SECRET_YML }}" > ./resources/application-secret.yml
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
