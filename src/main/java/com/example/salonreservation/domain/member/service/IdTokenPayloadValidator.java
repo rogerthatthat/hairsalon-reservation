@@ -3,9 +3,11 @@ package com.example.salonreservation.domain.member.service;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 @Component
+@PropertySource("classpath:application-secret.yml")
 public class IdTokenPayloadValidator {
 
     @Value("${kakao.login.token.iss}")

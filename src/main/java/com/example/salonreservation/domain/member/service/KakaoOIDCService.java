@@ -3,11 +3,13 @@ package com.example.salonreservation.domain.member.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 @Component
 @RequiredArgsConstructor
+@PropertySource("classpath:application-secret.yml")
 public class KakaoOIDCService {
 
     private final RestTemplate restTemplate;
