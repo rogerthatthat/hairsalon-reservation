@@ -32,6 +32,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: make application yml  # application.yml 생성
+      run: |
+        cd ./src/main
+        mkdir -p ./resources
+        touch ./resources/application.yml
+        echo "${{ secrets.APPLICATION_YML }}" > ./resources/application.yml
+        touch ./resources/application-secret.yml
+        echo "${{ secrets.APPLICATION_SECRET_YML }}" > ./resources/application-secret.yml
+
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
@@ -41,17 +50,29 @@ jobs:
       run: |
         chmod +x ./gradlew  # gradlew에 실행 권한 부여
         ./gradlew build
-
     - name: Upload JAR file  # JAR 파일을 업로드
       uses: actions/upload-artifact@v3
       with:
         name: salon
         path: build/libs/salon-reservation-0.0.1-SNAPSHOT.jar
 
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
+
+    env:
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      RDS_HOST: ${{ secrets.RDS_HOST }}
+      RDS_PORT: ${{ secrets.RDS_PORT }}
+      RDS_USER: ${{ secrets.RDS_USER }}
+      RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+      EC2_KEY: ${{ secrets.EC2_KEY }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
     - name: Download JAR file
@@ -59,24 +80,21 @@ jobs:
       with:
         name: salon
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
     - name: Deploy to EC2
-      env:
-        EC2_USER: ${{ secrets.EC2_USER }}
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-        RDS_HOST: ${{ secrets.RDS_HOST }}
-        RDS_PORT: ${{ secrets.RDS_PORT }}
-        RDS_USER: ${{ secrets.RDS_USER }}
-        RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
-        EC2_KEY: ${{ secrets.EC2_KEY }}
       run: |
         echo "Starting deployment..."
         echo "$EC2_KEY" > ec2_key.pem
         chmod 600 ec2_key.pem
-
         echo "Transferring JAR file to EC2..."
         scp -o StrictHostKeyChecking=no -i ec2_key.pem salon-reservation-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/salon-reservation/salon-reservation-0.0.1-SNAPSHOT.jar
         echo "File transfer complete."
-
         echo "Connecting to EC2 and starting application..."
         ssh -o StrictHostKeyChecking=no -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
           mkdir -p /home/ubuntu/salon-reservation
