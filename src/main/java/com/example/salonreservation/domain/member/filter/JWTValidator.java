@@ -25,9 +25,9 @@ import java.util.List;
 @Component
 public class JWTValidator extends OncePerRequestFilter {
 
-    private Algorithm algorithm;
-    private SecurityContextHolder securityContextHolder;
-    private MemberRepository memberRepository;
+    private final Algorithm algorithm;
+    private final SecurityContextHolder securityContextHolder;
+    private final MemberRepository memberRepository;
     private static final List<String> EXCLUDE_URLS = List.of("/signin", "/oauth", "/reissue");
 
     public JWTValidator(@Value("${spring.jwt.secret}") String secret, SecurityContextHolder securityContextHolder, MemberRepository memberRepository) {

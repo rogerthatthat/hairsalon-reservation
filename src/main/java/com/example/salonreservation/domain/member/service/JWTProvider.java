@@ -6,18 +6,19 @@ import com.example.salonreservation.domain.member.entity.RefreshToken;
 import com.example.salonreservation.domain.member.repository.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+@Service
 public class JWTProvider {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private Algorithm algorithm;
+    private final Algorithm algorithm;
 
     public JWTProvider(RefreshTokenRepository refreshTokenRepository, @Value("${spring.jwt.secret}") String secret) {
         this.refreshTokenRepository = refreshTokenRepository;
@@ -25,46 +26,45 @@ public class JWTProvider {
     }
 
 
-    public Map<String, String> createJWTs(String kakaoMemberId) {
-        Map result = new HashMap();
+    public Map<String, String> createTokens(String kakaoMemberId) {
+        Map tokens = new HashMap();
 
-        String accessJWT = createAccessJWT(kakaoMemberId);
-        String refreshJWT = createRefreshJWT(kakaoMemberId);
+        String accessToken = createAccessToken(kakaoMemberId);
+        String refreshToken = createRefreshToken(kakaoMemberId);
 
-        result.put("accessJWT", "Bearer " + accessJWT);
-        result.put("refreshJWT", refreshJWT);
+        tokens.put("accessToken", "Bearer " + accessToken);
+        tokens.put("refreshToken", refreshToken);
 
-        return result;
+        return tokens;
     }
 
 
-    private String createAccessJWT(String kakaoMemberID) {
+    private String createAccessToken(String kakaoMemberID) {
         Instant ACCESS_EXP = Instant.now().plusSeconds(60*10);  //10분
 
-        String accessJWT = JWT.create()
+        String accessToken = JWT.create()
                 //.withIssuer("헤어골라 서버 주소")
                 .withSubject(kakaoMemberID)
                 .withIssuedAt(new Date(System.currentTimeMillis()))
                 .withExpiresAt(ACCESS_EXP)
                 .sign(algorithm);
 
-        return accessJWT;
+        return accessToken;
     }
 
-    private String createRefreshJWT(String kakaoMemberID) {
+    @Transactional
+    private String createRefreshToken(String kakaoMemberID) {
         Instant REFRESH_EXP = Instant.now().plusSeconds(60*60*24*30);  //30일
 
-        String refreshJWT = JWT.create()
+        String refreshToken = JWT.create()
                 //.withIssuer("헤어골라 서버 주소")
                 .withSubject(kakaoMemberID)
                 .withIssuedAt(new Date(System.currentTimeMillis()))
                 .withExpiresAt(REFRESH_EXP)
                 .sign(algorithm);
 
-        RefreshToken refreshToken = new RefreshToken(kakaoMemberID, refreshJWT);
-        refreshTokenRepository.save(refreshToken);
-
-        return refreshJWT;
+        refreshTokenRepository.save(new RefreshToken(kakaoMemberID, refreshToken));
+        return refreshToken;
     }
 
     public static String createCookie(String name, String value) {

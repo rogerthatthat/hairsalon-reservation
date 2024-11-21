@@ -62,11 +62,11 @@ public class MemberController {
         String kakaoMemberId = kakaoLoginService.getKakaoMemberId(accessToken);
 
         memberService.ensureMemberIsJoined(kakaoMemberId);
-        Map<String, String> jwTs = jwtProvider.createJWTs(kakaoMemberId);
+        Map<String, String> tokens = jwtProvider.createTokens(kakaoMemberId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, jwTs.get("accessJWT"));
-        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", jwTs.get("refreshJWT")));
+        headers.add(HttpHeaders.AUTHORIZATION, tokens.get("accessToken"));
+        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", tokens.get("refreshToken")));
         headers.add(HttpHeaders.LOCATION, "/");
 
         return new ResponseEntity(null, headers, HttpStatus.FOUND);
@@ -77,7 +77,6 @@ public class MemberController {
     public Optional<Member> getProfile() {
         Long memberId = securityContextHolder.getContext();
         Optional<Member> profile = memberService.getProfile(memberId);
-        System.out.println("memberId = " + memberId);
 
         return profile;
     }
@@ -86,7 +85,6 @@ public class MemberController {
     @PutMapping("/profile")
     public void modifyProfile(@RequestBody MemberDto memberDto) {
         Long memberId = securityContextHolder.getContext();
-        System.out.println("memberId = " + memberId);
         memberService.modifyProfile(memberId, memberDto);
     }
 
@@ -94,7 +92,6 @@ public class MemberController {
     @DeleteMapping("/profile")
     public void removeProfile() {
         Long memberId = securityContextHolder.getContext();
-        System.out.println("memberId = " + memberId);
         memberService.removeProfile(memberId);
     }
 }

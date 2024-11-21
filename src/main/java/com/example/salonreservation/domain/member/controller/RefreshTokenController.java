@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -25,7 +24,7 @@ import static com.example.salonreservation.domain.member.service.JWTProvider.cre
 @RestController
 public class RefreshTokenController {
 
-    private Algorithm algorithm;
+    private final Algorithm algorithm;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JWTProvider jwtProvider;
 
@@ -41,10 +40,11 @@ public class RefreshTokenController {
     public ResponseEntity reissueTokens(@CookieValue("hairgolla_refresh") String refreshToken) {
         JWTVerifier verifier = getJwtVerifier();
         DecodedJWT verifiedRefreshToken;
+        String kakaoMemberId;
 
         try {
             verifiedRefreshToken = verifier.verify(refreshToken);
-            String kakaoMemberId = verifiedRefreshToken.getSubject();
+            kakaoMemberId = verifiedRefreshToken.getSubject();
             existsRefreshToken(kakaoMemberId);
         } catch (TokenExpiredException e) {
             return new ResponseEntity("Refresh Token Expired", HttpStatus.BAD_REQUEST);
@@ -52,15 +52,12 @@ public class RefreshTokenController {
             return new ResponseEntity("Invalid Refresh Token", HttpStatus.BAD_REQUEST);
         }
 
-        String kakaoMemberId = verifiedRefreshToken.getSubject();
         refreshTokenRepository.deleteById(refreshToken);
-        Map<String, String> tokens = jwtProvider.createJWTs(kakaoMemberId);
-        RefreshToken newRefreshToken = new RefreshToken(kakaoMemberId, tokens.get("refreshJWT"));
-        refreshTokenRepository.save(newRefreshToken);
+        Map<String, String> tokens = jwtProvider.createTokens(kakaoMemberId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, tokens.get("accessJWT"));
-        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", tokens.get("refreshJWT")));
+        headers.add(HttpHeaders.AUTHORIZATION, tokens.get("accessToken"));
+        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", tokens.get("refreshToken")));
 
         return new ResponseEntity(null, headers, HttpStatus.OK);
     }
