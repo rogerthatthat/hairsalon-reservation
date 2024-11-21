@@ -1,9 +1,11 @@
-package com.example.salonreservation.domain.member.service;
+package com.example.salonreservation.domain.member.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.salonreservation.domain.member.dto.OIDCPublicKey;
+import com.example.salonreservation.domain.member.service.KakaoOIDCService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

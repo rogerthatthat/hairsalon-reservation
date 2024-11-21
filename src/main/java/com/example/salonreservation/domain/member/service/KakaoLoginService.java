@@ -1,6 +1,9 @@
 package com.example.salonreservation.domain.member.service;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.salonreservation.domain.member.util.IdTokenPayloadValidator;
+import com.example.salonreservation.domain.member.util.IdTokenSignValidator;
+import com.example.salonreservation.domain.member.util.TokenHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -125,14 +128,17 @@ public class KakaoLoginService {
      * @param accessToken
      * @return kakaoMemberId
      */
-    public Long getKakaoMemberId(String accessToken) {
+    public String getKakaoMemberId(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         ResponseEntity<Map> response = restTemplate.exchange(userInfoUri, HttpMethod.GET, request, Map.class);
 
-        return tokenHelper.getKakaoMemberIdFromResponse(response);
+        return getKakaoMemberIdFromResponse(response);
     }
 
+    private String getKakaoMemberIdFromResponse(ResponseEntity<Map> response) {
+        return (String) response.getBody().get("sub");
+    }
 }

@@ -1,13 +1,15 @@
 package com.example.salonreservation.domain.member.service;
 
+import com.example.salonreservation.domain.member.dto.OIDCPublicKey;
+import com.example.salonreservation.domain.member.dto.OIDCPublicKeysResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-@Component
+@Service
 @RequiredArgsConstructor
 @PropertySource("classpath:application-secret.yml")
 public class KakaoOIDCService {

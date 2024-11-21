@@ -1,4 +1,4 @@
-package com.example.salonreservation.domain.member.service;
+package com.example.salonreservation.domain.member.util;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -35,28 +35,28 @@ public class IdTokenPayloadValidator {
 
     private void verifyAud(DecodedJWT idToken, String restApiKey) {
         if (!idToken.getAudience().get(0).equals(restApiKey)) {
-            throw new JWTVerificationException("토큰의 수신자가 일치하지 않습니다.");
+            throw new JWTVerificationException("Invalid Audience");
         }
     }
 
 
     private void verifyIss(DecodedJWT idToken) {
         if (!idToken.getIssuer().equals(iss)) {
-            throw new JWTVerificationException("토큰의 발급자가 일치하지 않습니다.");
+            throw new JWTVerificationException("Invalid Issuer");
         }
     }
 
 
     private void verifyExp(DecodedJWT idToken) {
         if (!(idToken.getExpiresAt().getTime() > System.currentTimeMillis())) {
-            throw new JWTVerificationException("토큰이 만료되었습니다.");
+            throw new JWTVerificationException("Token Expired");
         }
     }
 
 
     private void verifyNonce(DecodedJWT idToken, String nonce) {
         if (!idToken.getClaim("nonce").asString().equals(nonce)) {
-            throw new JWTVerificationException("토큰의 nonce 값이 일치하지 않습니다.");
+            throw new JWTVerificationException("Invalid Nonce");
         }
     }
 

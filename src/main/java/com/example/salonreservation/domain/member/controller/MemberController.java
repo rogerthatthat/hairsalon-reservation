@@ -1,15 +1,19 @@
 package com.example.salonreservation.domain.member.controller;
 
+import com.example.salonreservation.domain.member.dto.MemberDto;
+import com.example.salonreservation.domain.member.entity.Member;
+import com.example.salonreservation.domain.member.service.JWTProvider;
 import com.example.salonreservation.domain.member.service.KakaoLoginService;
 import com.example.salonreservation.domain.member.service.MemberService;
+import com.example.salonreservation.domain.member.util.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
+import java.util.Optional;
+
+import static com.example.salonreservation.domain.member.service.JWTProvider.createCookie;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,9 +21,12 @@ public class MemberController {
 
     private final KakaoLoginService kakaoLoginService;
     private final MemberService memberService;
+    private final JWTProvider jwtProvider;
+    private final SecurityContextHolder securityContextHolder;
 
     /**
      * 카카오 로그인 페이지 리턴
+     *
      * @return 카카오 계정 로그인 요청 URL
      * 프론트에서 해당 URL로 리다이렉트
      */
@@ -36,6 +43,7 @@ public class MemberController {
      * 이후 카카오로부터 액세스 토큰, 리프레시 토큰, OIDC ID 토큰 받기 요청
      * OIDC ID 토큰 유효성 검증
      * 회원의 헤어골라 가입여부 확인
+     *
      * @param paramMap
      * @return
      */
@@ -51,12 +59,42 @@ public class MemberController {
         String accessToken = kakaoLoginService.verifyIdToken(body);  //OIDC ID 토큰 유효성 검증
 
         //OIDC ID 토큰 유효성 검증 성공 시 사용자 액세스 토큰으로 카카오 회원번호 조회
-        Long kakaoMemberId = kakaoLoginService.getKakaoMemberId(accessToken);
+        String kakaoMemberId = kakaoLoginService.getKakaoMemberId(accessToken);
 
-        //카카오 회원번호를 기반으로 헤어골라에 가입된 회원인지 확인
-        Map result = memberService.checkMember(kakaoMemberId);
+        memberService.ensureMemberIsJoined(kakaoMemberId);
+        Map<String, String> jwTs = jwtProvider.createJWTs(kakaoMemberId);
 
-        return new ResponseEntity(result, HttpStatus.CREATED);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, jwTs.get("accessJWT"));
+        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", jwTs.get("refreshJWT")));
+        headers.add(HttpHeaders.LOCATION, "/");
+
+        return new ResponseEntity(null, headers, HttpStatus.FOUND);
     }
 
+
+    @GetMapping("/profile")
+    public Optional<Member> getProfile() {
+        Long memberId = securityContextHolder.getContext();
+        Optional<Member> profile = memberService.getProfile(memberId);
+        System.out.println("memberId = " + memberId);
+
+        return profile;
+    }
+
+
+    @PutMapping("/profile")
+    public void modifyProfile(@RequestBody MemberDto memberDto) {
+        Long memberId = securityContextHolder.getContext();
+        System.out.println("memberId = " + memberId);
+        memberService.modifyProfile(memberId, memberDto);
+    }
+
+
+    @DeleteMapping("/profile")
+    public void removeProfile() {
+        Long memberId = securityContextHolder.getContext();
+        System.out.println("memberId = " + memberId);
+        memberService.removeProfile(memberId);
+    }
 }

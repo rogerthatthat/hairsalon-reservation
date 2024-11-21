@@ -1,8 +1,7 @@
-package com.example.salonreservation.domain.member.service;
+package com.example.salonreservation.domain.member.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -21,10 +20,6 @@ public class TokenHelper {
 
     public String getKidFromIdToken(DecodedJWT idToken) {
         return idToken.getHeaderClaim("kid").asString();
-    }
-
-    public Long getKakaoMemberIdFromResponse(ResponseEntity<Map> response) {
-        return Long.valueOf((String) response.getBody().get("sub"));
     }
 
 }

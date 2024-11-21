@@ -1,4 +1,4 @@
-package com.example.salonreservation.domain.member.service;
+package com.example.salonreservation.domain.member.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
