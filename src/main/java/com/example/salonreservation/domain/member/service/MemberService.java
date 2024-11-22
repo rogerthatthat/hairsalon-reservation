@@ -1,6 +1,6 @@
 package com.example.salonreservation.domain.member.service;
 
-import com.example.salonreservation.domain.member.dto.MemberDto;
+import com.example.salonreservation.domain.member.dto.ProfileDto;
 import com.example.salonreservation.domain.member.entity.Member;
 import com.example.salonreservation.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +31,14 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Member> getProfile(Long memberId) {
-        Optional<Member> profile = memberRepository.findById(memberId);
-        return profile;
+    public ProfileDto getProfile(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow();
+        return ProfileDto.fromEntity(member);
     }
 
-    public void modifyProfile(Long memberId, MemberDto memberDto) {
-        Member profile = memberRepository.findById(memberId).orElseThrow();
-        profile.editProfile(memberDto.getName(), memberDto.getEmail(), memberDto.getBirth(), memberDto.getGender());
+    public void modifyProfile(Long memberId, ProfileDto profileDto) {
+        Member member = memberRepository.findById(memberId).orElseThrow();
+        member.editProfile(profileDto.getName(), profileDto.getEmail(), profileDto.getBirth(), profileDto.getGender());
     }
 
     public void removeProfile(Long memberId) {

@@ -1,7 +1,6 @@
 package com.example.salonreservation.domain.member.controller;
 
-import com.example.salonreservation.domain.member.dto.MemberDto;
-import com.example.salonreservation.domain.member.entity.Member;
+import com.example.salonreservation.domain.member.dto.ProfileDto;
 import com.example.salonreservation.domain.member.service.JWTProvider;
 import com.example.salonreservation.domain.member.service.KakaoLoginService;
 import com.example.salonreservation.domain.member.service.MemberService;
@@ -11,7 +10,6 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 import static com.example.salonreservation.domain.member.service.JWTProvider.createCookie;
 
@@ -22,7 +20,6 @@ public class MemberController {
     private final KakaoLoginService kakaoLoginService;
     private final MemberService memberService;
     private final JWTProvider jwtProvider;
-    private final SecurityContextHolder securityContextHolder;
 
     /**
      * 카카오 로그인 페이지 리턴
@@ -74,24 +71,20 @@ public class MemberController {
 
 
     @GetMapping("/profile")
-    public Optional<Member> getProfile() {
-        Long memberId = securityContextHolder.getContext();
-        Optional<Member> profile = memberService.getProfile(memberId);
-
-        return profile;
+    public ProfileDto getProfile() {
+        Long memberId = SecurityContextHolder.getContext();
+        return memberService.getProfile(memberId);
     }
-
 
     @PutMapping("/profile")
-    public void modifyProfile(@RequestBody MemberDto memberDto) {
-        Long memberId = securityContextHolder.getContext();
-        memberService.modifyProfile(memberId, memberDto);
+    public void modifyProfile(@RequestBody ProfileDto profileDto) {
+        Long memberId = SecurityContextHolder.getContext();
+        memberService.modifyProfile(memberId, profileDto);
     }
-
 
     @DeleteMapping("/profile")
     public void removeProfile() {
-        Long memberId = securityContextHolder.getContext();
+        Long memberId = SecurityContextHolder.getContext();
         memberService.removeProfile(memberId);
     }
 }

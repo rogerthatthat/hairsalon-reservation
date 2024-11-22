@@ -28,7 +28,7 @@ public class JWTValidator extends OncePerRequestFilter {
     private final Algorithm algorithm;
     private final SecurityContextHolder securityContextHolder;
     private final MemberRepository memberRepository;
-    private static final List<String> EXCLUDE_URLS = List.of("/signin", "/oauth", "/reissue");
+    private static final List<String> EXCLUDE_URLS = List.of("/signin", "/oauth", "/reissue");  //업데이트 필요 -> 멀티 모듈의 필요성
 
     public JWTValidator(@Value("${spring.jwt.secret}") String secret, SecurityContextHolder securityContextHolder, MemberRepository memberRepository) {
         this.algorithm = Algorithm.HMAC256(secret);

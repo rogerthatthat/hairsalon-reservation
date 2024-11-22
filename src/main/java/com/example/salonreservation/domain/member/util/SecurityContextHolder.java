@@ -12,7 +12,7 @@ public class SecurityContextHolder {
         return memberIdStorage.get();
     }
 
-    public Long getContext() {
+    public static Long getContext() {
         return memberIdStorage.get();
     }
 
