@@ -20,6 +20,7 @@ public class Salon extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "salon_id")
 	private Long id;
+	private String password;
 
 	private String salonName;
 	private String salonInfo;
@@ -27,7 +28,6 @@ public class Salon extends BaseEntity {
 	private double longitude; // 경도
 	private String address;
 	private String phoneNum;
-	private double rating; // 별점
 	private int likes; // 좋아요 수
 
 	@OneToMany(mappedBy = "salon")
