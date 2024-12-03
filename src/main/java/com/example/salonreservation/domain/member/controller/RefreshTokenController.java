@@ -7,8 +7,8 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.salonreservation.domain.member.entity.RefreshToken;
-import com.example.salonreservation.domain.member.repository.RefreshTokenRepository;
 import com.example.salonreservation.domain.member.service.JWTProvider;
+import com.example.salonreservation.domain.member.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,22 +17,20 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
-import static com.example.salonreservation.domain.member.service.JWTProvider.createCookie;
+import static com.example.salonreservation.domain.member.service.RefreshTokenService.createRefreshTokenCookie;
 
 @RestController
 public class RefreshTokenController {
 
     private final Algorithm algorithm;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
     private final JWTProvider jwtProvider;
 
     public RefreshTokenController(@Value("${spring.jwt.secret}") String secret,
-                                  RefreshTokenRepository refreshTokenRepository,
+                                  RefreshTokenService refreshTokenService,
                                   JWTProvider jwtProvider) {
         this.algorithm = Algorithm.HMAC256(secret);
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.refreshTokenService = refreshTokenService;
         this.jwtProvider = jwtProvider;
     }
 
@@ -45,29 +43,23 @@ public class RefreshTokenController {
         try {
             verifiedRefreshToken = verifier.verify(refreshToken);
             kakaoMemberId = verifiedRefreshToken.getSubject();
-            existsRefreshToken(kakaoMemberId);
+            refreshTokenService.existsRefreshToken(kakaoMemberId);
         } catch (TokenExpiredException e) {
             return new ResponseEntity("Refresh Token Expired", HttpStatus.BAD_REQUEST);
         }catch (JWTVerificationException e) {
             return new ResponseEntity("Invalid Refresh Token", HttpStatus.BAD_REQUEST);
         }
 
-        refreshTokenRepository.deleteById(refreshToken);
-        Map<String, String> tokens = jwtProvider.createTokens(kakaoMemberId);
+        refreshTokenService.deleteByRefreshToken(refreshToken);
+        String newRefreshToken = jwtProvider.createRefreshToken(kakaoMemberId);
+        refreshTokenService.addRefreshToken(new RefreshToken(kakaoMemberId, newRefreshToken));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, tokens.get("accessToken"));
-        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", tokens.get("refreshToken")));
+        headers.add(HttpHeaders.AUTHORIZATION, jwtProvider.createAccessToken(kakaoMemberId));
+        headers.add(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("hairgolla_refresh", newRefreshToken));
 
         return new ResponseEntity(null, headers, HttpStatus.OK);
     }
-
-    private void existsRefreshToken(String refreshToken) {
-        if (!refreshTokenRepository.existsById(refreshToken)) {
-            throw new JWTVerificationException("Refresh Token Not Exists");
-        }
-    }
-
 
     private JWTVerifier getJwtVerifier() {
         return JWT.require(algorithm)

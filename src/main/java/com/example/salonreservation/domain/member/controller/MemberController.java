@@ -1,9 +1,11 @@
 package com.example.salonreservation.domain.member.controller;
 
 import com.example.salonreservation.domain.member.dto.ProfileDto;
+import com.example.salonreservation.domain.member.entity.RefreshToken;
 import com.example.salonreservation.domain.member.service.JWTProvider;
 import com.example.salonreservation.domain.member.service.KakaoLoginService;
 import com.example.salonreservation.domain.member.service.MemberService;
+import com.example.salonreservation.domain.member.service.RefreshTokenService;
 import com.example.salonreservation.domain.member.util.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-import static com.example.salonreservation.domain.member.service.JWTProvider.createCookie;
+import static com.example.salonreservation.domain.member.service.RefreshTokenService.createRefreshTokenCookie;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ public class MemberController {
 
     private final KakaoLoginService kakaoLoginService;
     private final MemberService memberService;
+    private final RefreshTokenService refreshTokenService;
     private final JWTProvider jwtProvider;
 
     /**
@@ -59,11 +62,13 @@ public class MemberController {
         String kakaoMemberId = kakaoLoginService.getKakaoMemberId(accessToken);
 
         memberService.ensureMemberIsJoined(kakaoMemberId);
-        Map<String, String> tokens = jwtProvider.createTokens(kakaoMemberId);
+
+        String refreshToken = jwtProvider.createRefreshToken(kakaoMemberId);
+        refreshTokenService.addRefreshToken(new RefreshToken(kakaoMemberId, refreshToken));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, tokens.get("accessToken"));
-        headers.add(HttpHeaders.SET_COOKIE, createCookie("hairgolla_refresh", tokens.get("refreshToken")));
+        headers.add(HttpHeaders.AUTHORIZATION, jwtProvider.createAccessToken(kakaoMemberId));
+        headers.add(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("hairgolla_refresh", refreshToken));
         headers.add(HttpHeaders.LOCATION, "/");
 
         return new ResponseEntity(null, headers, HttpStatus.FOUND);
