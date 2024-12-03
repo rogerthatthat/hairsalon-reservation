@@ -19,6 +19,7 @@ public class Member extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "member_id")
 	private Long id;
+	private String kakaoMemberId;  //카카오 서버에서의 회원번호
 
 	private String name;
 	private String email;
@@ -27,4 +28,15 @@ public class Member extends BaseEntity {
 
 	@OneToMany(mappedBy = "member")
 	private List<Reservation> reservations = new ArrayList<>();
+
+	public Member(String kakaoMemberId) {
+		this.kakaoMemberId = kakaoMemberId;
+	}
+
+	public void editProfile(String name, String email, String birth, String gender) {
+		this.name = name;
+		this.email = email;
+		this.birth = birth;
+		this.gender = gender;
+	}
 }

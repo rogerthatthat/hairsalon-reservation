@@ -6,6 +6,7 @@ import com.example.salonreservation.domain.member.entity.Member;
 import com.example.salonreservation.domain.menu.entity.Menu;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,4 +36,20 @@ public class Reservation extends BaseEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "menu_id", nullable = false)
 	private Menu menu;
+
+	@Builder
+	private Reservation(LocalDateTime serviceDate, LocalDateTime serviceTime, Member member, Designer designer, Menu menu) {
+		this.serviceDate = serviceDate;
+		this.serviceTime = serviceTime;
+		this.member = member;
+		this.designer = designer;
+		this.menu = menu;
+	}
+
+	public void updateReservation(LocalDateTime serviceDate, LocalDateTime serviceTime, Designer designer, Menu menu) {
+		this.serviceDate = serviceDate;
+		this.serviceTime = serviceTime;
+		this.designer = designer;
+		this.menu = menu;
+	}
 }

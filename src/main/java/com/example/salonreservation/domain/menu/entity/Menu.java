@@ -5,6 +5,7 @@ import com.example.salonreservation.domain.reservation.entity.Reservation;
 import com.example.salonreservation.domain.salon.entity.Salon;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,4 +36,26 @@ public class Menu extends BaseEntity {
 
 	@OneToMany(mappedBy = "menu")
 	private List<Reservation> reservations = new ArrayList<>();
+
+	@Builder
+	private Menu(String menuName, String menuInfo, String price, String time, boolean shampooYN, boolean cutYN, String target, Salon salon) {
+		this.menuName = menuName;
+		this.menuInfo = menuInfo;
+		this.price = price;
+		this.time = time;
+		this.shampooYN = shampooYN;
+		this.cutYN = cutYN;
+		this.target = target;
+		this.salon = salon;
+	}
+
+	public void updateMenu(String menuName, String menuInfo, String price, String time, boolean shampooYN, boolean cutYN, String target) {
+		this.menuName = menuName;
+		this.menuInfo = menuInfo;
+		this.price = price;
+		this.time = time;
+		this.shampooYN = shampooYN;
+		this.cutYN = cutYN;
+		this.target = target;
+	}
 }
