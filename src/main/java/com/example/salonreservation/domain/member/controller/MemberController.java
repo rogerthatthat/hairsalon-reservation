@@ -9,13 +9,15 @@ import com.example.salonreservation.domain.member.service.RefreshTokenService;
 import com.example.salonreservation.domain.member.util.SecurityContextHolder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 import static com.example.salonreservation.domain.member.service.RefreshTokenService.createRefreshTokenCookie;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 public class MemberController {
 
@@ -30,6 +32,7 @@ public class MemberController {
      * @return 카카오 계정 로그인 요청 URL
      * 프론트에서 해당 URL로 리다이렉트
      */
+    @ResponseBody
     @GetMapping("/signin")
     public ResponseEntity getSignInPage() {
         Map body = kakaoLoginService.getKakaoSignInPage();
@@ -48,7 +51,7 @@ public class MemberController {
      * @return
      */
     @GetMapping("/oauth")
-    public ResponseEntity signInCallBack(@RequestParam Map<String, String> paramMap) {
+    public String signInCallBack(@RequestParam Map<String, String> paramMap, Model model) {
         if (paramMap.containsKey("error")) {  //카카오 로그인에서 에러 발생 시
             //예외 처리
         }
@@ -67,26 +70,26 @@ public class MemberController {
         refreshTokenService.addRefreshToken(new RefreshToken(kakaoMemberId, refreshToken));
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.AUTHORIZATION, jwtProvider.createAccessToken(kakaoMemberId));
         headers.add(HttpHeaders.SET_COOKIE, createRefreshTokenCookie("hairgolla_refresh", refreshToken));
-        headers.add(HttpHeaders.LOCATION, "/");
-
-        return new ResponseEntity(null, headers, HttpStatus.FOUND);
+        model.addAttribute("accessToken", jwtProvider.createAccessToken(kakaoMemberId));
+        return "redirect";
     }
 
-
+    @ResponseBody
     @GetMapping("/profile")
     public ProfileDto getProfile() {
         Long memberId = SecurityContextHolder.getContext();
         return memberService.getProfile(memberId);
     }
 
+    @ResponseBody
     @PutMapping("/profile")
     public void modifyProfile(@RequestBody ProfileDto profileDto) {
         Long memberId = SecurityContextHolder.getContext();
         memberService.modifyProfile(memberId, profileDto);
     }
 
+    @ResponseBody
     @DeleteMapping("/profile")
     public void removeProfile() {
         Long memberId = SecurityContextHolder.getContext();

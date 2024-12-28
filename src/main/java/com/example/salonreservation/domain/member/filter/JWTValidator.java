@@ -40,7 +40,7 @@ public class JWTValidator extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!isBearerTokenType(authorization)) return;
+        if (!isBearerTokenType(authorization)) throw new RuntimeException("Invalid Authorization");
 
         String accessToken = getAccessToken(authorization);
         JWTVerifier verifier = getJwtVerifier();
